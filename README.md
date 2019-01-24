@@ -1,4 +1,4 @@
-# Kubernetes cluster
+# Multi-Node Non-Production Grade Kubernetes cluster
 A vagrant script for setting up a Kubernetes cluster using Kubeadm
 
 ## Pre-requisites
