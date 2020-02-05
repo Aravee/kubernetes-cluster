@@ -1,0 +1,46 @@
+sudo /usr/local/bin/etcd --name k8s-master --data-dir /var/lib/etcd --cert-file=/home/vagrant/certs/client.pem  --key-file=/home/vagrant/certs/client-key.pem --client-cert-auth --initial-advertise-peer-urls http://192.168.1.100:2380 --listen-peer-urls http://192.168.1.100:2380 --listen-client-urls https://192.168.1.100:2379,https://127.0.0.1:2379 --advertise-client-urls https://192.168.1.100:2379 --initial-cluster-token etcd-cluster-1 --initial-cluster  k8s-master=http://192.168.1.100:2380 --initial-cluster-state new --heartbeat-interval 1000 --election-timeout 5000
+
+openssl genrsa -out etcd.key 2048
+
+cat > openssl-etcd.cnf << "EOF"
+[req]
+req_extensions = v3_req
+distinguished_name = req_distinguished_name
+[req_distinguished_name]
+[ v3_req ]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth,serverAuth
+subjectAltName = IP:$ENV::ETCD_IP, DNS:$ENV::ETCD_FQDN
+EOF
+
+
+[Unit]
+Description=etcd
+Documentation=http://github.com/coreos
+Type=notify
+
+[Service]
+ExecStart=/usr/local/bin/etcd \
+  --name k8s-master \
+#  --cert-file=/etc/etcd/etcd-server.crt \
+#  --key-file=/etc/etcd/etcd-server.key \
+#  --peer-cert-file=/etc/etcd/etcd-server.crt \
+#  --peer-key-file=/etc/etcd/etcd-server.key \
+#  --trusted-ca-file=/etc/etcd/ca.crt \
+#  --peer-trusted-ca-file=/etc/etcd/ca.crt \
+#  --peer-client-cert-auth \
+#  --client-cert-auth \
+#  --initial-advertise-peer-urls http://192.168.1.100:2380 \
+#  --listen-peer-urls http://192.168.1.100:2380 \
+  --listen-client-urls http://192.168.1.100:2379,http://127.0.0.1:2379 \
+  --advertise-client-urls http://192.168.1.100:2379 \
+  --initial-cluster-token etcd-cluster-0 \
+  --initial-cluster k8s-master=http://192.168.1.100:2380,k8s-node-1=http://192.168.1.101:2380,k8s-node-2=http://192.168.1.102:2380 \
+  --initial-cluster-state new \
+  --data-dir=/var/lib/etcd
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

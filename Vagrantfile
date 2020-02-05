@@ -1,6 +1,3 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
-
 servers = [
     {
         :name => "k8s-master",
@@ -8,7 +5,7 @@ servers = [
         :box => "ubuntu/xenial64",
         :box_version => "20180831.0.0",
         :eth1 => "192.168.1.100",
-        :mem => "2048",
+        :mem => "1024",
         :cpu => "2"
     },
     {
@@ -17,8 +14,8 @@ servers = [
         :box => "ubuntu/xenial64",
         :box_version => "20180831.0.0",
         :eth1 => "192.168.1.101",
-        :mem => "2048",
-        :cpu => "2"
+        :mem => "512",
+        :cpu => "1"
     },
     {
         :name => "k8s-node-2",
@@ -26,8 +23,8 @@ servers = [
         :box => "ubuntu/xenial64",
         :box_version => "20180831.0.0",
         :eth1 => "192.168.1.102",
-        :mem => "2048",
-        :cpu => "2"
+        :mem => "512",
+        :cpu => "1"
     }
 ]
 
@@ -40,6 +37,7 @@ Vagrant.configure("2") do |config|
             config.vm.box_version = opts[:box_version]
             config.vm.hostname = opts[:name]
             config.vm.network :private_network, ip: opts[:eth1]
+            config.vm.synced_folder "/Users/aravindhana/brew/boxes/kubernetes-cluster/", "/vagrant_data"
 
             config.vm.provider "virtualbox" do |v|
 
@@ -50,16 +48,18 @@ Vagrant.configure("2") do |config|
 
             end
 
-            config.vm.provision "shell", path: "scripts/base.sh"
-
             if opts[:type] == "master"
-                config.vm.provision "shell", path: "scripts/master.sh"
-            else
-                config.vm.provision "shell", path: "scripts/worker.sh"
-            end
-
+                config.vm.provision  "ansible" do |ansible|
+                    ansible.playbook = "playbooks/master/main.yml"
+                end
+            if opts[:type] == "worker"  
+                config.vm.provision  "ansible" do |ansible|
+                    ansible.playbook = "playbooks/worker/main.yml"
+                    end
+                end
+            end        
         end
 
     end
 
-end 
+end
